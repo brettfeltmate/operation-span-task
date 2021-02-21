@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Operation Span</title>
+    <script
+            src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous">
+    </script>
+    <script src='js/jspsych.js'></script>
+    <script src='js/plugins/operation-span-trial.js'></script>
+    <script src = 'js/plugins/jspsych-fullscreen.js'></script>
+    <script src="js/plugins/jspsych-html-button-response.js"></script>
+    <script src="js/plugins/jspsych-instructions.js"></script>
+    <script src='js/utilities/utilities.js'></script>
+    <script src = 'js/utilities/calculator/third-party-scripts/assert.js'></script>
+    <script src = 'js/utilities/calculator/calculator-parser.js'></script>
+    <script src = 'js/utilities/calculator/calculator-backends.js'></script>
+    <script src = '../lib/klect.js'></script>
+
+    <link rel = 'stylesheet' href="css/jspsych.css">
+    <link rel = 'stylesheet' href="css/operation_span_task.css">
+
+</head>
+<body>
+
+<script>
+
+    var data_repo = []
+    var data_template = {
+    	"participant": null,
+        "session": null,
+        "session_date": null,
+        "config_name": null,
+        "practice": null,
+        "practice_type": null,
+        "equation": 'NA',
+        "equation_duration": 'NA',
+        "equation_rt": 'NA',
+        "probe": 'NA',
+        "probe_validity": 'NA',
+        "probe_response": 'NA',
+        "probe_rt": 'NA',
+        "probe_error": 'NA',
+        "probe_error_set_percent": 'NA',
+        "memory_item": 'NA',
+        "memory_item_duration": 'NA',
+        "recall_rt": 'NA',
+        "recall_order": 'NA',
+        "recall_absolute_score": "NA",
+        "recall_partial_score": "NA",
+        "set_num": null,
+        "set_size": null,
+        "set_index": null
+    };
+
+    var min_set_size = (jsPsych.data.getURLVariable('min_set_size') === undefined) ? 2 : jsPsych.data.getURLVariable('min_set_size');
+    var max_set_size = (jsPsych.data.getURLVariable('max_set_size') === undefined) ? 5 : jsPsych.data.getURLVariable('max_set_size');
+    var reps_per_set_size = (jsPsych.data.getURLVariable('reps_per_set_size') === undefined) ? 2 : jsPsych.data.getURLVariable('reps_per_set_size');
+
+    var experiment_params = {
+        'min_set_size': min_set_size,
+        'max_set_size': max_set_size,
+        'reps_per_set_size': reps_per_set_size
+    }
+
+    var memory_items_full = {
+	    'F':'resources/F.png',
+	    'H':'resources/H.png',
+	    'J':'resources/J.png',
+	    'K':'resources/K.png',
+	    'L':'resources/L.png',
+	    'N':'resources/N.png',
+	    'P':'resources/P.png',
+	    'Q':'resources/Q.png',
+	    'R':'resources/R.png',
+	    'S':'resources/S.png',
+	    'T':'resources/T.png',
+	    'Y':'resources/Y.png',
+    }
+
+    var practice_trials_span = [];
+    var set_num = 1;
+    for (let i = experiment_params["min_set_size"]; i <= experiment_params["max_set_size"]; i++) {
+    	let imgs_shuffled = shuffleObject(memory_items_full)
+        let span_items = objSlice(imgs_shuffled, i)
+        let span_paths = obj_values(span_items)
+
+        for (let j = 0; j < i; j++) {
+        	let trial = {
+                'practice': 'yes',
+                'practice_type': 'span',
+                'is_recall_trial': ( j === i -1),
+                'memory_item': span_paths[j],
+                'memory_items_presented': span_items,
+                'memory_items_full': memory_items_full,
+                'set_num': set_num,
+                'set_size': i,
+                'set_index': j+1
+            }
+            practice_trials_span.push(trial)
+        }
+        set_num += 1;
+    }
+
+    var practice_trials_equation = [];
+    var equations_practice = array_shuffle(practice_equations)
+    for (let i = 0; i<equations_practice; i++) {
+    	let trial = {
+    		'practice': 'yes',
+            'practice_type': 'equation',
+            'is_recall_trial': false,
+            'equation': equations_practice[i],
+            'probe_validity': (coinflip()) ? 'congruent' : 'incongruent',
+            'set_num': 1,
+            'set_size': equations_practice.length,
+            'set_index': i+1
+        }
+        practice_trials_equation.push(trial)
+    }
+
+    var combined_practice_trials = [];
+    for (let i=1; i <= 3; i++) {
+	    let imgs_shuffled = shuffleObject(memory_items_full)
+	    let span_items = objSlice(imgs_shuffled, 2)
+	    let span_paths = obj_values(span_items)
+
+        for (let j=0; j<span_paths.length; j++){
+        	let trial = {
+                'practice': 'yes',
+                'is_recall_trial': (j === span_paths.length - 1),
+                'equation': randomChoice(practice_equations),
+		        'probe_validity': (coinflip()) ? 'congruent' : 'incongruent',
+                'memory_item': span_paths[j],
+		        'memory_items_presented': span_items,
+		        'memory_items_full': memory_items_full,
+                'set_num': i,
+                'set_size': 2
+                'set_index': j+1
+            }
+            combined_practice_trials.push(trial);
+        }
+    }
+
+    var testing_trials = []
+    for (let i = experiment_params["min_set_size"]; i <= experiment_params["max_set_size"]; i++) {
+	    for (let j = 1; j <= experiment_params['reps_per_set_size']; j++) {
+		    let imgs_shuffled = shuffleObject(memory_items_full)
+		    let span_items = objSlice(imgs_shuffled, i)
+		    let span_paths = obj_values(span_items)
+
+		    for (var k = 0; k < span_paths.length; k++) {
+			    let trial = {
+				    'practice': 'no',
+				    'is_recall_trial': (k === span_paths.length - 1),
+				    'equation': randomChoice(testing_equations),
+				    'probe_validity': (coinflip()) ? 'congruent' : 'incongruent',
+				    'memory_item': span_paths[k],
+				    'memory_items_presented': span_items,
+				    'memory_items_full': memory_items_full,
+				    'set_num': i*j,
+				    'set_size': i,
+				    'set_index': k+1
+			    }
+			    testing_trials.push(trial);
+            }
+        }
+    }
+
+    var enter_fullscreen = {type: 'fullscreen', fullscreen_mode: true}
+    var exit_fullscreen = {type: 'fullscreen', fullscreen_mode: false}
+    var welcome_screen = {
+    	type: 'html-button-response',
+        stimulus: 'Welcome to Operation Span. Press start to begin.',
+        choices: ['start']
+    }
+    var end_screen = {
+	    type: 'html-button-response',
+	    stimulus: 'You have completed Operation Span. Press exit to exit fullscreen.',
+	    choices: ['exit']
+    }
+    var instructions = {
+    	type: 'instructions',
+        pages: [`<p> General instructions to go here </p>`],
+        show_clickable_nav: true
+    }
+    var span_practice_start = {
+	    type: 'html-button-response',
+	    stimulus: 'Span practice block.',
+	    choices: ['begin']
+    }
+
+    var span_practice_stop= {
+	    type: 'html-button-response',
+	    stimulus: 'Span practice complete.',
+	    choices: ['continue']
+    }
+
+    var equation_practice_start = {
+	    type: 'html-button-response',
+	    stimulus: 'Equation practice block.',
+	    choices: ['begin']
+    }
+
+    var equation_practice_stop = {
+	    type: 'html-button-response',
+	    stimulus: 'Equation practice complete.',
+	    choices: ['continue']
+    }
+
+    var combined_practice_start = {
+	    type: 'html-button-response',
+	    stimulus: 'Combined practice block.',
+	    choices: ['begin']
+    }
+
+    var combined_practice_stop = {
+	    type: 'html-button-response',
+	    stimulus: 'Combined practice complete.',
+	    choices: ['continue']
+    }
+
+    var testing_block_start = {
+	    type: 'html-button-response',
+	    stimulus: 'Testing block',
+	    choices: ['begin']
+    }
+
+    var testing_block_stop = {
+	    type: 'html-button-response',
+	    stimulus: 'Testing block complete',
+	    choices: ['continue']
+    }
+
+    var operation_span_trial = {
+    	type: 'operation-span-trial',
+        practice: jsPsych.timelineVariable('practice'),
+	    practice_type: jsPsych.timelineVariable('practice_type'),
+	    is_recall_trial: jsPsych.timelineVariable('is_recall_trial'),
+	    equation: jsPsych.timelineVariable('equation'),
+        //equation_duration:  todo: figure this out
+	    probe_validity: jsPsych.timelineVariable('probe_validity'),
+        memory_item: jsPsych.timelineVariable('memory_item'),
+	    memory_items_presented: jsPsych.timelineVariable('memory_items_presented'),
+	    memory_items_full: jsPsych.timelineVariable('memory_items_full'),
+        set_num: jsPsych.timelineVariable('set_num'),
+	    set_size: jsPsych.timelineVariable('set_size'),
+	    set_index: jsPsych.timelineVariable('set_index')
+    }
+
+    let span_practice_block = {
+    	timeline: [operation_span_trial],
+        timeline_variables: practice_trials_span,
+        randomize_order: false
+    }
+
+    let equation_practice_block = {
+	    timeline: [operation_span_trial],
+	    timeline_variables: practice_trials_equation,
+	    randomize_order: false
+    }
+
+    let combined_practice_block = {
+	    timeline: [operation_span_trial],
+	    timeline_variables: combined_practice_trials,
+	    randomize_order: false
+    }
+
+    let testing_block = {
+	    timeline: [operation_span_trial],
+	    timeline_variables: testing_trials,
+	    randomize_order: false
+    }
+
+    let final_timeline = [
+    	enter_fullscreen,
+        welcome_screen,
+        span_practice_start,
+        span_practice_block,
+        span_practice_stop,
+        equation_practice_start,
+        equation_practice_block,
+        equation_practice_stop,
+        combined_practice_start,
+        combined_practice_block,
+        combined_practice_stop,
+        testing_block_start,
+        testing_block,
+        testing_block_stop,
+        end_screen,
+        exit_fullscreen
+    ]
+
+
+
+    jsPsych.init({
+        timeline: final_timeline,
+        on_finish: function() {
+	        KLect.send('klein', 'eskes', 'operation_span', 'brett.feltmate@dal.ca', '../..', data_repo)
+        }
+    })
+
+
+
+</script>
+
+</body>
+</html>

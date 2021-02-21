@@ -1,0 +1,161 @@
+$grue: rgb(90,90,96);
+$gray: rgb(223, 223, 220);
+$offset: 5px;
+
+body {
+  background-color: $grue;
+  font-size: 25pt;
+  color: $gray;
+  font-family: sans-serif;
+}
+
+.operation-span-layout {
+  font-size: 20pt;
+  display: grid;
+  height: 95vh;
+  width: 90vw;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 4fr 1fr 1fr;
+  grid-template-areas:
+          "prompt"
+          "stimulus-display"
+          "answer-bank"
+          "button-bank";
+  place-items: center;
+  grid-row-gap: 5vh;
+}
+
+.operation-span-single-item {
+  grid-area: stimulus-display;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  place-items: center;
+  border: 5px solid $gray;
+  border-radius: 12pt;
+  padding: 10px;
+  height: 100%;
+  width: 70%;
+}
+
+.operation-span-recall-array {
+  display: grid;
+  grid-area: stimulus-display;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  grid-row-gap: 2vh;
+  grid-column-gap: 2vw;
+  place-items: center;
+  border: 5px solid $gray;
+  border-radius: 12pt;
+  padding: 10px;
+  width: 70%;
+  height: 100%;
+
+}
+
+.operation-span-recall-item {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: "index img";
+  place-items: center;
+  margin: 5px;
+  width: 100%;
+  height: 100%;
+  &.skip {
+    background-color: $gray;
+    border: 1px solid black;
+  }
+}
+
+.text-item {
+  place-self: center;
+  line-height: 0.5em;
+  &.prompt {
+    grid-area: prompt;
+  }
+  &.recall-index {
+    display: grid;
+    align-items: center;
+    justify-items: right;
+    grid-area: index;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.image-item{
+  height: 100%;
+  width: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 1;
+  &.recall-image {
+    grid-area: img;
+  }
+  &.selected {
+    opacity: 0.5;
+  }
+}
+
+.operation-span-recall-bank {
+  display: grid;
+  grid-area: answer-bank;
+  place-content: space-evenly;
+  grid-template-columns: repeat(12, 1fr);
+  grid-column-gap: 2vw;
+  grid-auto-rows: 1fr;
+  height: 100%;
+  width: 70%;
+}
+
+.operation-span-recall-item {
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.operation-span-button-bank {
+  display: flex;
+  grid-area: button-bank;
+  place-content: space-evenly;
+  margin: $offset;
+  width: 70%;
+  height: 100%;
+  border: 5px solid $gray;
+  border-radius: 12pt;
+  padding: 10px;
+}
+
+.operation-span-button {
+  opacity: 0.75;
+  place-self: center;
+  background-color: $gray;
+  border: none;
+  border-radius: 12pt;
+  width: 25%;
+  height: 90%;
+  color: $grue;
+  font-size: 20pt;
+  &.selected {
+    border: 2px solid black;
+  }
+}
+.operation-span-button:hover {
+  opacity: 1;
+}
+
+.operation-span-overlay-text {
+  color: $grue;
+  -webkit-text-fill-color: $gray;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: $grue;
+}
+
+.dev-lines {
+  border: 1px solid red;
+}
