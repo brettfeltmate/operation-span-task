@@ -52,12 +52,6 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 				default: null,
 				description: "Mathematical equation (string) to be evaluated by user"
 			},
-			equation_duration: {
-				type: jsPsych.plugins.parameterType.INT,
-				pretty_name: 'equation duration',
-				default: 10000,
-				description: "Duration to listen for user responses before event self-terminates. Value is conditionally changed as a function of performance during practice trials."
-			},
 			probe_validity: {
 				type: jsPsych.plugins.parameterType.STRING,
 				pretty_name: 'probe validity',
@@ -73,7 +67,7 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			memory_item_duration: {
 				type: jsPsych.plugins.parameterType.INT,
 				pretty_name: "Memory item duration",
-				default: 800,
+				default: 5000,
 				description: "How long to present memory item before trial terminates, in ms."
 			},
 			memory_items_presented: {
@@ -109,34 +103,93 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 		}
 	};
 
-	plugin.set_trial_properties = function(trial) {
-		pr('set_trial_properties()')
-		trial_info = obj_left_join(data_template, trial)
+	plugin.set_trial_properties = function (trial) {
+
+
+
+
 
 		plugin.present_equation = false
 		plugin.present_memory_item = false
-		// plugin.present_equation = (trial_info.practice_type !== 'span');
-		// plugin.present_memory_item = (trial_info.practice_type !== 'equation')
+		plugin.present_equation = (trial_info.practice_type !== 'span');
+		plugin.present_memory_item = (trial_info.practice_type !== 'equation');
 		plugin.present_recall = trial.is_recall_trial;
 
-
+		pr(plugin.present_equation, 'present equation')
+		pr(plugin.present_memory_item, 'present memory item')
+		pr(plugin.present_recall, 'present recall')
 
 		if (plugin.present_equation) {
-			trial_info.equation = (trial_info.practice_type === 'equation') ? trial_info.equation : plugin.extend_equation(trial_info.equation);
-			trial_info.probe = plugin.get_probe_value(trial_info.equation, trial_info.probe_validity)
+			trial_info.equation_duration = experiment_params.equation_duration;
+			trial_info.equation = (trial_info.practice === 'yes') ? trial_info.equation : plugin.extend_equation(trial_info.equation);
+			trial_info.probe = plugin.get_probe_value(trial_info.probe_validity)
 		}
 
 		if (plugin.present_recall) {
-			plugin.recall_selections = [];
-			plugin.recall_count = 1;
 			plugin.memory_items_full = trial.memory_items_full
 			plugin.memory_items_presented = trial.memory_items_presented
 
-			pr(plugin.memory_items_full, 'items full')
 		}
 
+		plugin.all_events = {
+			'equation': {
+				'duration': trial_info.equation_duration,
+				'display': 'equation',
+				'terminator': '#equation_continue',
+				'timeout': null,
+				'start': null,
+				'rt': null,
+				'calls': 'probe'
+			},
+			'probe': {
+				'duration': null,
+				'display': 'probe',
+				'terminator': '#probe_submit',
+				'timeout': null,
+				'start': null,
+				'rt': null,
+				'response': null,
+				'calls': (plugin.present_memory_item) ? 'memory_item' : null
+			},
+			'memory_item': {
+				'duration': trial_info.memory_item_duration,
+				'display': 'memory_item',
+				'terminator': null,
+				'timeout': null,
+				'start': null,
+				'rt': null,
+				'calls': (plugin.present_recall) ? 'recall' : null
+			},
+			'recall': {
+				'duration': null,
+				'display': 'recall',
+				'terminator': '#recall_submit',
+				'timeout': null,
+				'start': null,
+				'rt': null,
+				'recall_count': 1,
+				'recall_selections': [],
+				'calls': null
+			}
+		}
+
+		plugin.trial_events = {}
+
+		if (plugin.present_equation) {
+			plugin.trial_events.equation = plugin.all_events.equation
+			plugin.trial_events.probe = plugin.all_events.probe
+		};
+		if (plugin.present_memory_item) {
+			plugin.trial_events.memory_item = plugin.all_events.memory_item;
+		}
+		if (plugin.present_recall) {
+			plugin.trial_events.recall = plugin.all_events.recall;
+		}
+
+		plugin.call_defferal = (plugin.present_memory_item) ? 'memory_item' : null
+
 		plugin.stimuli = {
-			'equation': (plugin.present_equation) ? plugin.spawn_equation_element(trial_info.equation) : null ,
+			'equation': (plugin.present_equation) ? plugin.spawn_equation_element(trial_info.equation) : null,
 			'probe': (plugin.present_equation) ? plugin.spawn_probe_element(trial_info.probe) : null,
 			'memory_item': (plugin.present_memory_item) ? plugin.spawn_memory_item_element(trial_info.memory_item) : null,
 			'recall': (plugin.present_recall) ? plugin.spawn_recall_elements(plugin.memory_items_full) : null,
@@ -154,81 +207,77 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			'memory_item': (plugin.present_memory_item) ? plugin.spawn_prompt_element('memory_item') : null,
 			'recall': (plugin.present_recall) ? plugin.spawn_prompt_element('recall') : null
 		}
-
-
 	}
 
-	plugin.click_handler = function(e) {
-		pr('click_handler()')
+	plugin.click_handler = function (e) {
 		e.stopPropagation();
 
-		if (! $(this).hasClass('selected')) {
+		if (!$(this).hasClass('selected')) {
 			// label as being selected
 			$(this).addClass('selected')
 			// Add selection number
-			$(this).children('.text-item').text(`${plugin.recall_count}`);
+			$(this).children('.text-item').text(`${plugin.trial_events['recall'].recall_count}`);
 			$(this).children('.image-item').addClass('selected')
 
 			// grab image selected, append to recall bank
-			img_key = $(this).children('.image-item').data('key')
-			img_choice = $('<div />').addClass('operation-span-recall-item').css('background-image', `url('${plugin.memory_items_full[img_key]}')`)
+			pr($(this).children('.image-item').data('key'))
+			let img_key = $(this).children('.image-item').data('key')
+			let img_choice = $('<div />').addClass(`image-item bg-${img_key}`)
+
 			$('.operation-span-recall-bank').append(img_choice)
 
-			plugin.recall_selections.push(img_key)
-			plugin.recall_count += 1;
+			plugin.trial_events['recall'].recall_count += 1;
+			plugin.trial_events['recall'].recall_selections.push(img_key);
+
 		}
 	}
 
 	plugin.button_handler = function (e) {
 		e.stopPropagation();
-
 		let pressed = $(this).attr('id');
-		pr('button_handler({0})'.format(pressed))
+
 		switch(pressed) {
-			case 'equation_continue':
-				plugin.response_stop_time = performance.now();
-				plugin.response_made = true;
-				plugin.populate_display('probe');
-				break;
-			case 'recall_confirm':
-				plugin.response_stop_time = performance.now();
-				plugin.response_made = true;
-				plugin.log_performance('recall')
-				break;
 			case 'probe_yes':
 			case 'probe_no':
-				plugin.probe_response = pressed;
+				plugin.trial_events['probe'].response = pressed.replace('probe_', "");
 				$('.operation-span-button').removeClass('selected')
 				$('#'+pressed).addClass('selected')
 				break;
-			case 'probe_confirm':
-				if (plugin.probe_response !== null) {
-					plugin.response_stop_time = performance.now();
-					plugin.response_made = true;
-				}
-				break;
 			case 'recall_skip':
-				$('.operation-span-recall-bank').append($('<div >').addClass('operation-span-recall-item skip'))
-				plugin.recall_count += 1;
-				plugin.recall_selections.push('skip')
+				pr('skip fired')
+				$('.operation-span-recall-bank').append($('<div >').addClass('image-item skip'))
+				plugin.trial_events['recall'].recall_count += 1;
+				plugin.trial_events['recall'].recall_selections.push('skip');
 				break;
 			case 'recall_clear':
+				pr('clear fired')
 				$('#trial_display').find('.selected').removeClass('selected')
 				$('.recall-index').empty();
 				$('.operation-span-recall-bank').empty();
-				plugin.recall_count = 1;
-				plugin.recall_selections = [];
+				plugin.trial_events['recall'].recall_count = 1;
+				plugin.trial_events['recall'].recall_selections = [];
 				break;
 		}
 	}
 
 	plugin.extend_equation = function(equation) {
-		pr('extend_equation()')
+		pr(equation)
 		let operand = ranged_random(-9, 9);
-		let result = evaluateAsFloat(`${equation} + ${operand}`);
+		pr(operand)
+
+		let result;
+		if (operand < 0) {
+			result = evaluateAsFloat(`${equation} - ${Math.abs(operand)}`);
+		} else {
+			result = evaluateAsFloat(`${equation} + ${Math.abs(operand)}`);
+		}
 		while (result <= 0 || operand === 0 ) {
 			operand += 3;
-			result = evaluateAsFloat(`${equation} + ${operand}`);
+			if (operand < 0) {
+				result = evaluateAsFloat(`${equation} - ${Math.abs(operand)}`);
+			} else {
+				result = evaluateAsFloat(`${equation} + ${Math.abs(operand)}`);
+			}
 		};
 
 		let operator = (operand < 0) ? '-' : '+';
@@ -236,7 +285,7 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 	}
 
 	plugin.get_probe_value = function(validity) {
-		pr('get_probe_value()')
+		pr('get_probe_value({0})'.format(validity))
 		let solution_actual = evaluateAsFloat(trial_info.equation)
 		if (validity === 'congruent') {
 			return  solution_actual;
@@ -244,7 +293,7 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			adjustment = ranged_random(-9, 9);
 			let proposed_solution = solution_actual + adjustment;
 			while (proposed_solution <= 0 || proposed_solution === solution_actual) {
-				adustment += 2
+				adjustment += 2
 				proposed_solution = solution_actual + adjustment
 			}
 			return proposed_solution
@@ -252,7 +301,6 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 	}
 
 	plugin.spawn_equation_element = function(equation) {
-		pr('spawn_equation_element()')
 		let equation_text = equation.replace('*', 'x').replace('/', '÷') + ' = ?';
 
 		return $('<div />').addClass('operation-span-single-item text-item').append(
@@ -261,7 +309,6 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 	}
 
 	plugin.spawn_probe_element = function(probe) {
-		pr('spawn_probe_element()')
 		let probe_item = $('<p >').text(probe);
 		return $('<div />').addClass('operation-span-single-item text-item').append(
 			probe_item
@@ -269,24 +316,22 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 	}
 
 	plugin.spawn_prompt_element = function(event_type) {
-		pr('spawn_prompt_element')
 
 		prompts = {
 			'equation': "Press continue when you know the answer.",
 			'probe':  "Is this the correct answer? Press confirm when done.",
 			'memory_item': "test",
-			'recall': "Select the images in the order presented. Press skip for forgotten items, clear to begin again, and confirm once done."
+			'recall': `<p>Select the images in the order they were presented in.<br><br><br>Press skip for forgetten items, clear to being again, and submit once done.</p>`
 		}
 
 		return $('<div />').addClass('text-item prompt').html(prompts[event_type])
 	}
 
 	plugin.spawn_button_bank = function(event_type) {
-		pr('spawn_button_bank()')
 		button_labels = {
 			'equation': ['continue'],
-			'probe': ['yes', 'no', 'confirm'],
-			'recall': ['skip', 'clear', 'confirm']
+			'probe': ['yes', 'no', 'submit'],
+			'recall': ['skip', 'clear', 'submit']
 		}
 		labels = button_labels[event_type];
 
@@ -300,26 +345,29 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 
 	}
 
-	plugin.spawn_memory_item_element = function(memory_item) {
-		pr('spawn_memory_item_elements()')
-		let memory_stim = $('<div />').addClass('image-item').css('background-image', `url('${memory_item}')`)
+	plugin.spawn_memory_item_element = function(span_item) {
+		let memory_stim = $('<div />').addClass(`image-item bg-${span_item}`)
+
 		return $('<div />').addClass('operation-span-single-item').append(
 			memory_stim
 		).attr('id', 'memory_item_element')
 	}
 
-	plugin.spawn_recall_elements = function(memory_items_full) {
-		pr('spawn_recall_elements()')
+	plugin.spawn_recall_elements = function(span_items) {
 		let array_elements = [];
 
-		for (var key of Object.keys(memory_items_full)) {
+		for (let i=0; i<span_items.length; i++) {
+
+
 			let cell = $('<div />').addClass('operation-span-recall-item');
 			let cell_contents = [];
 
 			cell_contents.push(
 				$('<div />').addClass('text-item recall-index'),
-				$('<div />').addClass('image-item recall-image').css('background-image', `url('${memory_items_full[key]}')`).data('key', key)
+				$('<div />').addClass(`image-item recall-image bg-${span_items[i]}`).data('key', span_items[i])
 			)
+
+			//pr($('<div />').addClass(`image-item recall-image bg-${span_items[i]}`).data('key'))
 
 			$(cell).append(cell_contents)
 			array_elements.push(cell)
@@ -334,8 +382,7 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 		return [recall_bank, recall_array]
 	}
 
-	plugin.populate_display = function(event_type) {
-		pr('populate_display()')
+	plugin.present_display = function(event_type) {
 
 		let prompt = plugin.prompts[event_type]
 		let buttons = plugin.buttons[event_type]
@@ -348,58 +395,140 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			})
 		} else {to_append.push(stimulus)}
 
+		$('body').on('click', '.operation-span-button', plugin.button_handler)
+		$('body').on('click', '.operation-span-recall-item', plugin.click_handler)
+
 		$('#trial_display').empty().append(to_append)
+
+
 	}
 
-	plugin.log_performance = function(event_type) {
-		if (event_type !== 'memory_item') {
-			let event_rt = event_type + '_rt';
-			trial_info[event_rt] = (plugin.response_made) ? plugin.response_stop_time - plugin.response_start_time : 'timeout';
-		}
-		if (event_type === 'probe') {
-			trial_info.probe_response = plugin.probe_response;
+	plugin.log_performance = function() {
+
+		if (plugin.present_equation) {
+
+			trial_info.equation_rt = (plugin.trial_events['equation'].rt) ? plugin.trial_events['equation'].rt : 'timeout';
+			trial_info.probe_rt =  (plugin.trial_events['probe'].rt) ? plugin.trial_events['probe'].rt : 'timeout';
+			trial_info.probe_response = (plugin.trial_events['probe'].response) ? plugin.trial_events['probe'].response : 'timeout';
+
 			switch(trial_info.probe_validity) {
-				case 'congruent':
-					trial_info.probe_error = trial_info.probe_response === 'no';
+				case "congruent":
+					trial_info.probe_error = (trial_info.probe_response === 'no');
 					break;
 				case 'incongruent':
-					trial_info.probe_error = trial_info.probe_response === 'yes';
+					trial_info.probe_error = (trial_info.probe_response === 'yes');
 					break;
 			}
 		}
-		if (event_type === 'recall') {
 
+		if (plugin.present_recall) {
+			trial_info.recall_rt = plugin.trial_events['recall'].rt;
+			trial_info.recall_order = plugin.trial_events['recall'].recall_selections;
 
-			let imgs_presented = obj_keys(plugin.memory_items_presented)
-			pr(imgs_presented, 'imgs_presented')
-			pr(plugin.recall_selections, 'recall_selections')
-			trial_info.recall_order = plugin.recall_selections;
-			trial_info.recall_partial_score = count_matches(imgs_presented, plugin.recall_selections)
-			trial_info.recall_absolute_score = (trial_info.recall_partial_score === imgs_presented.length) ? imgs_presented.length : 0;
-			pr(trial_info)
+			trial_info.recall_partial_score = count_matches(plugin.memory_items_presented, trial_info.recall_order);
+			trial_info.recall_absolute_score = (trial_info.recall_partial_score === plugin.memory_items_presented.length) ? plugin.memory_items_presented.length : 0;
+
+			let feedback = $('<div />').addClass('operation-span-single-item').append(
+				$('<p />').text(`You correctly recalled {0} of {1} items`.format(trial_info.recall_partial_score, plugin.memory_items_presented.length))
+			)
+			$('#trial_display').empty().append(feedback)
+
+		}
+		if (plugin.present_recall) {
+			setTimeout(function() {
+				plugin.end_trial()
+			}, 2000)
+		} else {
+			plugin.end_trial()
 		}
 	}
 
+	plugin.run_sequence = function(event_type) {
+
+		// present first event
+		plugin.present_display(plugin.trial_events[event_type].display)
+
+
+		// start timing for RT
+		plugin.trial_events[event_type].start = now();
+
+		// If event has a timeout
+		if (plugin.trial_events[event_type].duration !== null) {
+			// set timeout to fire if duration elapses without response
+			plugin.trial_events[event_type].timeout = setTimeout(function() {
+				$('body').off()
+				$('#trial_display').empty()
+				// detach handlers to prevent responding post timeout
+				//$('body').off();
+
+				// if equation event times-out, then probe event cannot be allowed to occur
+				if (event_type === 'equation') {
+					plugin.trial_events[event_type].calls = plugin.call_defferal;
+				}
+
+				// if there is another event to occur, run it, otherwise end trial
+				if (plugin.trial_events[event_type].calls !== null) {
+					plugin.run_sequence(plugin.trial_events[event_type].calls)
+				} else {
+					plugin.log_performance()
+				}
+
+				//plugin.trial_events[event_type].calls ? plugin.run_sequence(plugin.trial_events[event_type].calls) : plugin.log_performance()
+			}, plugin.trial_events[event_type].duration)
+		}
+
+		// if event comes with a button that terminates it
+		if (plugin.trial_events[event_type].terminator !== null) {
+			// upon clicking that button
+			$('body').on('click', plugin.trial_events[event_type].terminator , {event_type: event_type},function(event) {
+				$('body').off()
+				$('#trial_display').empty()
+				// clear timeout initialized at event start
+				clearTimeout(plugin.trial_events[event.data.event_type].timeout);
+				// grab rt to respond to event
+				plugin.trial_events[event.data.event_type].rt = now() - plugin.trial_events[event.data.event_type].start;
+
+				if (event.data.event_type === 'equation') {
+					plugin.trial_events['probe'].duration = plugin.trial_events['equation'].duration - plugin.trial_events['equation'].rt
+				}
+
+				// if there is another event to occur, run it, otherwise end trial
+				plugin.trial_events[event.data.event_type].calls ? plugin.run_sequence(plugin.trial_events[event.data.event_type].calls) : plugin.log_performance()
+			})
+		}
+
+
+	}
+
+	plugin.end_trial = function() {
+		$('body').off()
+		data_repo.push(trial_info)
+		pr(trial_info)
+		jsPsych.finishTrial(trial_info)
+	}
+
 	plugin.trial = function(display_element, trial) {
+		$('#jspsych-loading-progress-bar-container').remove()
+		display_element.innerHTML = '';
+		trial_info = obj_left_join(data_template, trial)
+
+
 		pr('trial()')
-		$('#jspsych-loading-progress-bar-container').remove();
+
+		plugin.trial_display = $('<div />').addClass('operation-span-layout').attr('id', 'trial_display')
+		$(display_element).append(plugin.trial_display)
+
 		plugin.set_trial_properties(trial)
-
-		$('body')
-			.on('click', '.operation-span-button', plugin.button_handler)
-			.on('click', '.operation-span-recall-item', plugin.click_handler);
-
-		$(display_element).append(
-			$('<div />').addClass('operation-span-layout')
-				.attr('id', 'trial_display')
-		)
-
-		plugin.populate_display('recall')
-		plugin.response_start_time = performance.now()
+		//
+		// setTimeout(function() {
+		// 	die();
+		// },1000)
 
 
 
 
+		pr(Object.keys(plugin.trial_events))
+		plugin.run_sequence(Object.keys(plugin.trial_events)[0])
 	};
 
 	return plugin;

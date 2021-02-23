@@ -63,10 +63,6 @@ body {
   margin: 5px;
   width: 100%;
   height: 100%;
-  &.skip {
-    background-color: $gray;
-    border: 1px solid black;
-  }
 }
 
 .text-item {
@@ -85,6 +81,7 @@ body {
   }
 }
 
+
 .image-item{
   height: 100%;
   width: 100%;
@@ -92,11 +89,29 @@ body {
   background-position: center;
   background-size: contain;
   opacity: 1;
+  &.bg-F { background-image: url('../resources/F.png');}
+  &.bg-H { background-image: url('../resources/H.png');}
+  &.bg-J { background-image: url('../resources/J.png');}
+  &.bg-K { background-image: url('../resources/K.png');}
+  &.bg-L { background-image: url('../resources/L.png');}
+  &.bg-N { background-image: url('../resources/N.png');}
+  &.bg-P { background-image: url('../resources/P.png');}
+  &.bg-Q { background-image: url('../resources/Q.png');}
+  &.bg-R { background-image: url('../resources/R.png');}
+  &.bg-S { background-image: url('../resources/S.png');}
+  &.bg-T { background-image: url('../resources/T.png');}
+  &.bg-Y { background-image: url('../resources/Y.png');}
   &.recall-image {
     grid-area: img;
   }
   &.selected {
     opacity: 0.5;
+  }
+  &.skip {
+    align-self: center;
+    height: 50%;
+    background-color: white;
+    border: 1px solid black;
   }
 }
 

@@ -55,10 +55,6 @@ body {
   width: 100%;
   height: 100%;
 }
-.operation-span-recall-item.skip {
-  background-color: #dfdfdc;
-  border: 1px solid black;
-}
 
 .text-item {
   place-self: center;
@@ -84,11 +80,53 @@ body {
   background-size: contain;
   opacity: 1;
 }
+.image-item.bg-F {
+  background-image: url("../resources/F.png");
+}
+.image-item.bg-H {
+  background-image: url("../resources/H.png");
+}
+.image-item.bg-J {
+  background-image: url("../resources/J.png");
+}
+.image-item.bg-K {
+  background-image: url("../resources/K.png");
+}
+.image-item.bg-L {
+  background-image: url("../resources/L.png");
+}
+.image-item.bg-N {
+  background-image: url("../resources/N.png");
+}
+.image-item.bg-P {
+  background-image: url("../resources/P.png");
+}
+.image-item.bg-Q {
+  background-image: url("../resources/Q.png");
+}
+.image-item.bg-R {
+  background-image: url("../resources/R.png");
+}
+.image-item.bg-S {
+  background-image: url("../resources/S.png");
+}
+.image-item.bg-T {
+  background-image: url("../resources/T.png");
+}
+.image-item.bg-Y {
+  background-image: url("../resources/Y.png");
+}
 .image-item.recall-image {
   grid-area: img;
 }
 .image-item.selected {
   opacity: 0.5;
+}
+.image-item.skip {
+  align-self: center;
+  height: 50%;
+  background-color: white;
+  border: 1px solid black;
 }
 
 .operation-span-recall-bank {

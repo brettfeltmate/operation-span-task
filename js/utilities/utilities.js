@@ -936,3 +936,67 @@ function count_matches(a, b) {
     }
     return count;
 }
+
+function mean(vals) {
+    return vals.reduce((a, b) => a + b) / vals.length
+}
+
+function sd(vals) {
+    let mu = mean(vals)
+    let S = 0;
+    for (let i=0; i<vals.length;i++) {
+        S += Math.pow(vals[i] - mu, 2)
+    }
+    return Math.sqrt(S)
+}
+
+function new_timeout(rts) {
+    mu = mean(rts)
+    s2 = sd(rts)
+    return mu + (2.5 * s2)
+}
+
+function sum_vectors(v1, v2) {
+
+    let summed_vector = []
+    if (!is_array(v1) || !is_array(v2)) throw "Both v1 & v2 must be arrays";
+    if (v1.length !== v2.length) throw "v1 and v2 must be of equal length";
+    for (let i=0; i<v1.length; i++) {
+        let a = (!isNaN(v1[i])) ? v1[i] : 0;
+        let b = (!isNaN(v2[i])) ? v2[i] : 0;
+        summed_vector.push(sum(a, b))
+    }
+    return summed_vector
+
+}
+
+function extract(needle, haystack) {
+    let output = [];
+    let path = needle.split('/');
+    let current_child = null;
+    if (!is_array(haystack)) haystack = [haystack];
+
+    for (let i = 0; i< haystack.length; i++) {
+        if (is_object(haystack[i])) {
+            // if there's no path, don't do extra work
+            if (path.length === 1 && obj_key_exists(path[0], haystack[i])) {
+                output.push(haystack[i][path[0]]);
+                continue;
+            }
+
+            for (let j = 0; j < path.length; j++) {
+                if (j === 0 && obj_key_exists(path[j], haystack[i])) {
+                    current_child = haystack[i][path[j]]
+                } else {
+                    if (j < path.length -1) {
+                        current_child = current_child[path[j]]
+                    } else {
+                        if (obj_key_exists(path[j], current_child)) output.push(current_child[path[j]])
+                    }
+                }
+            }
+        }
+    }
+
+    return output;
+}

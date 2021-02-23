@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <title>Operation Span</title>
     <script
-            src="https://code.jquery.com/jquery-3.4.1.min.js"
-            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            src="https://code.jquery.com/jquery-3.5.1.js"
+            integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
             crossorigin="anonymous">
+
     </script>
     <script src='js/jspsych.js'></script>
     <script src='js/plugins/operation-span-trial.js'></script>
@@ -14,6 +15,7 @@
     <script src="js/plugins/jspsych-html-button-response.js"></script>
     <script src="js/plugins/jspsych-instructions.js"></script>
     <script src='js/utilities/utilities.js'></script>
+    <script src = 'resources/equations.js'></script>
     <script src = 'js/utilities/calculator/third-party-scripts/assert.js'></script>
     <script src = 'js/utilities/calculator/calculator-parser.js'></script>
     <script src = 'js/utilities/calculator/calculator-backends.js'></script>
@@ -55,50 +57,38 @@
         "set_index": null
     };
 
-    var min_set_size = (jsPsych.data.getURLVariable('min_set_size') === undefined) ? 2 : jsPsych.data.getURLVariable('min_set_size');
-    var max_set_size = (jsPsych.data.getURLVariable('max_set_size') === undefined) ? 5 : jsPsych.data.getURLVariable('max_set_size');
-    var reps_per_set_size = (jsPsych.data.getURLVariable('reps_per_set_size') === undefined) ? 2 : jsPsych.data.getURLVariable('reps_per_set_size');
 
     var experiment_params = {
-        'min_set_size': min_set_size,
-        'max_set_size': max_set_size,
-        'reps_per_set_size': reps_per_set_size
+        'min_set_size': (jsPsych.data.getURLVariable('min_set_size') === undefined) ? 2 : jsPsych.data.getURLVariable('min_set_size'),
+        'max_set_size':  (jsPsych.data.getURLVariable('max_set_size') === undefined) ? 5 : jsPsych.data.getURLVariable('max_set_size'),
+        'reps_per_set_size': (jsPsych.data.getURLVariable('reps_per_set_size') === undefined) ? 2 : jsPsych.data.getURLVariable('reps_per_set_size'),
+        'equation_duration': 10000
     }
 
-    var memory_items_full = {
-	    'F':'resources/F.png',
-	    'H':'resources/H.png',
-	    'J':'resources/J.png',
-	    'K':'resources/K.png',
-	    'L':'resources/L.png',
-	    'N':'resources/N.png',
-	    'P':'resources/P.png',
-	    'Q':'resources/Q.png',
-	    'R':'resources/R.png',
-	    'S':'resources/S.png',
-	    'T':'resources/T.png',
-	    'Y':'resources/Y.png',
-    }
+    var memory_items_full = ['F', 'H', 'J', 'K', 'L', 'N', 'P', 'Q', 'R', 'S', 'T', 'Y']
+
 
     var practice_trials_span = [];
     var set_num = 1;
     for (let i = experiment_params["min_set_size"]; i <= experiment_params["max_set_size"]; i++) {
-    	let imgs_shuffled = shuffleObject(memory_items_full)
-        let span_items = objSlice(imgs_shuffled, i)
-        let span_paths = obj_values(span_items)
+    	let imgs_shuffled = array_shuffle(memory_items_full)
+        let span_items = imgs_shuffled.slice(0, i)
+
+        //let span_paths = obj_values(span_items)
 
         for (let j = 0; j < i; j++) {
         	let trial = {
                 'practice': 'yes',
                 'practice_type': 'span',
                 'is_recall_trial': ( j === i -1),
-                'memory_item': span_paths[j],
+                'memory_item': span_items[j],
                 'memory_items_presented': span_items,
                 'memory_items_full': memory_items_full,
                 'set_num': set_num,
                 'set_size': i,
                 'set_index': j+1
             }
+
             practice_trials_span.push(trial)
         }
         set_num += 1;
@@ -106,7 +96,7 @@
 
     var practice_trials_equation = [];
     var equations_practice = array_shuffle(practice_equations)
-    for (let i = 0; i<equations_practice; i++) {
+    for (let i = 0; i<equations_practice.length; i++) {
     	let trial = {
     		'practice': 'yes',
             'practice_type': 'equation',
@@ -122,21 +112,20 @@
 
     var combined_practice_trials = [];
     for (let i=1; i <= 3; i++) {
-	    let imgs_shuffled = shuffleObject(memory_items_full)
-	    let span_items = objSlice(imgs_shuffled, 2)
-	    let span_paths = obj_values(span_items)
-
-        for (let j=0; j<span_paths.length; j++){
+    	let equations = array_shuffle(practice_equations).slice(0, 2)
+	    let imgs_shuffled = array_shuffle(memory_items_full)
+	    let span_items = imgs_shuffled.slice(0, 2)
+        for (let j=0; j<span_items.length; j++){
         	let trial = {
                 'practice': 'yes',
-                'is_recall_trial': (j === span_paths.length - 1),
-                'equation': randomChoice(practice_equations),
+                'is_recall_trial': (j === span_items.length - 1),
+                'equation': equations[j],
 		        'probe_validity': (coinflip()) ? 'congruent' : 'incongruent',
-                'memory_item': span_paths[j],
+                'memory_item': span_items[j],
 		        'memory_items_presented': span_items,
 		        'memory_items_full': memory_items_full,
                 'set_num': i,
-                'set_size': 2
+                'set_size': 2,
                 'set_index': j+1
             }
             combined_practice_trials.push(trial);
@@ -146,17 +135,16 @@
     var testing_trials = []
     for (let i = experiment_params["min_set_size"]; i <= experiment_params["max_set_size"]; i++) {
 	    for (let j = 1; j <= experiment_params['reps_per_set_size']; j++) {
-		    let imgs_shuffled = shuffleObject(memory_items_full)
-		    let span_items = objSlice(imgs_shuffled, i)
-		    let span_paths = obj_values(span_items)
+		    let imgs_shuffled = array_shuffle(memory_items_full)
+		    let span_items = imgs_shuffled.slice(0, i)
 
-		    for (var k = 0; k < span_paths.length; k++) {
+		    for (let k = 0; k < span_items.length; k++) {
 			    let trial = {
 				    'practice': 'no',
-				    'is_recall_trial': (k === span_paths.length - 1),
+				    'is_recall_trial': (k === span_items.length - 1),
 				    'equation': randomChoice(testing_equations),
 				    'probe_validity': (coinflip()) ? 'congruent' : 'incongruent',
-				    'memory_item': span_paths[k],
+				    'memory_item': span_items[k],
 				    'memory_items_presented': span_items,
 				    'memory_items_full': memory_items_full,
 				    'set_num': i*j,
@@ -168,8 +156,24 @@
         }
     }
 
+    var operation_span_trial = {
+	    type: 'operation-span-trial',
+	    practice: jsPsych.timelineVariable('practice'),
+	    practice_type: jsPsych.timelineVariable('practice_type'),
+	    is_recall_trial: jsPsych.timelineVariable('is_recall_trial'),
+	    equation: jsPsych.timelineVariable('equation'),
+	    probe_validity: jsPsych.timelineVariable('probe_validity'),
+	    memory_item: jsPsych.timelineVariable('memory_item'),
+	    memory_items_presented: jsPsych.timelineVariable('memory_items_presented'),
+	    memory_items_full: jsPsych.timelineVariable('memory_items_full'),
+	    set_num: jsPsych.timelineVariable('set_num'),
+	    set_size: jsPsych.timelineVariable('set_size'),
+	    set_index: jsPsych.timelineVariable('set_index')
+    }
+
     var enter_fullscreen = {type: 'fullscreen', fullscreen_mode: true}
     var exit_fullscreen = {type: 'fullscreen', fullscreen_mode: false}
+
     var welcome_screen = {
     	type: 'html-button-response',
         stimulus: 'Welcome to Operation Span. Press start to begin.',
@@ -180,17 +184,18 @@
 	    stimulus: 'You have completed Operation Span. Press exit to exit fullscreen.',
 	    choices: ['exit']
     }
+
     var instructions = {
     	type: 'instructions',
         pages: [`<p> General instructions to go here </p>`],
         show_clickable_nav: true
     }
+
     var span_practice_start = {
 	    type: 'html-button-response',
 	    stimulus: 'Span practice block.',
 	    choices: ['begin']
     }
-
     var span_practice_stop= {
 	    type: 'html-button-response',
 	    stimulus: 'Span practice complete.',
@@ -202,7 +207,6 @@
 	    stimulus: 'Equation practice block.',
 	    choices: ['begin']
     }
-
     var equation_practice_stop = {
 	    type: 'html-button-response',
 	    stimulus: 'Equation practice complete.',
@@ -214,7 +218,6 @@
 	    stimulus: 'Combined practice block.',
 	    choices: ['begin']
     }
-
     var combined_practice_stop = {
 	    type: 'html-button-response',
 	    stimulus: 'Combined practice complete.',
@@ -226,48 +229,37 @@
 	    stimulus: 'Testing block',
 	    choices: ['begin']
     }
-
     var testing_block_stop = {
 	    type: 'html-button-response',
 	    stimulus: 'Testing block complete',
 	    choices: ['continue']
     }
 
-    var operation_span_trial = {
-    	type: 'operation-span-trial',
-        practice: jsPsych.timelineVariable('practice'),
-	    practice_type: jsPsych.timelineVariable('practice_type'),
-	    is_recall_trial: jsPsych.timelineVariable('is_recall_trial'),
-	    equation: jsPsych.timelineVariable('equation'),
-        //equation_duration:  todo: figure this out
-	    probe_validity: jsPsych.timelineVariable('probe_validity'),
-        memory_item: jsPsych.timelineVariable('memory_item'),
-	    memory_items_presented: jsPsych.timelineVariable('memory_items_presented'),
-	    memory_items_full: jsPsych.timelineVariable('memory_items_full'),
-        set_num: jsPsych.timelineVariable('set_num'),
-	    set_size: jsPsych.timelineVariable('set_size'),
-	    set_index: jsPsych.timelineVariable('set_index')
-    }
 
     let span_practice_block = {
     	timeline: [operation_span_trial],
         timeline_variables: practice_trials_span,
         randomize_order: false
     }
-
     let equation_practice_block = {
 	    timeline: [operation_span_trial],
 	    timeline_variables: practice_trials_equation,
-	    randomize_order: false
+	    randomize_order: false,
     }
-
     let combined_practice_block = {
 	    timeline: [operation_span_trial],
 	    timeline_variables: combined_practice_trials,
 	    randomize_order: false
     }
-
     let testing_block = {
+    	on_start: function() {
+    		let equation_rts = extract('equation_rt', data_repo)
+            let probe_rts = extract('probe_rt', data_repo)
+    		pr(equation_rts, 'equation_rts')
+            pr(probe_rts, 'probe_rts')
+		    let rts = sum_vectors(equation_rts, probe_rts)
+		    experiment_params['equation_duration'] = new_timeout(rts)
+	    },
 	    timeline: [operation_span_trial],
 	    timeline_variables: testing_trials,
 	    randomize_order: false
@@ -276,6 +268,7 @@
     let final_timeline = [
     	enter_fullscreen,
         welcome_screen,
+        instructions,
         span_practice_start,
         span_practice_block,
         span_practice_stop,
@@ -291,7 +284,6 @@
         end_screen,
         exit_fullscreen
     ]
-
 
 
     jsPsych.init({
