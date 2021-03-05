@@ -867,8 +867,7 @@ function deg_to_px(deg) {
     return deg * 10;
 }
 
-const sum = (a, b) =>
-    a + b;
+const sum = (a, b) => a + b;
 
 function randomChoice(arr) {
     return arr[Math.floor(arr.length * Math.random())];
@@ -924,12 +923,14 @@ function shuffleObject(obj){
     return newObj;
 }
 
+// returns true or false, if probability (prob) provided, used to weight odds of returning true
 function coinflip(prob) {
     let p = (defined(prob)) ? prob : 0.5;
     return Math.random() < p;
 }
 
-function count_matches(a, b) {
+// Given two arrays, returns number of matching elements, order restricted.
+function countMatches(a, b) {
     let count = 0;
     for (var i=0; i<a.length; i++) {
         if (a[i] == b[i]) count++;
@@ -937,10 +938,20 @@ function count_matches(a, b) {
     return count;
 }
 
+// Given numeric array, returns mean of values contained within
 function mean(vals) {
     return vals.reduce((a, b) => a + b) / vals.length
 }
 
+function getPercentError(vals, set_size) {
+    if (vals.length === 1) {
+        return 'NA'
+    } else {
+        return vals.reduce((a, b) => a + b) / set_size
+    }
+}
+
+// Given numeric array, returns SD of values contained within
 function sd(vals) {
     let mu = mean(vals)
     let S = 0;
@@ -950,26 +961,31 @@ function sd(vals) {
     return Math.sqrt(S)
 }
 
-function new_timeout(rts) {
+// Given array of rts, returns value equal to mean + 2.5 SDs
+function setDuration(rts) {
     mu = mean(rts)
     s2 = sd(rts)
     return mu + (2.5 * s2)
 }
 
-function sum_vectors(v1, v2) {
-
+// returns array of equal length to passed arrays, where each element is the sum of the respective elements in v1 & v2
+function sumVectors(v1, v2) {
     let summed_vector = []
-    if (!is_array(v1) || !is_array(v2)) throw "Both v1 & v2 must be arrays";
-    if (v1.length !== v2.length) throw "v1 and v2 must be of equal length";
+    // Ensure v1 & v2 are both arrays of equal length
+    if (v1.length !== v2.length || !is_array(v1) || !is_array(v2)) throw "v1 and v2 must be arrays of equal length";
+    // Walk arrays, summing each element pair,
     for (let i=0; i<v1.length; i++) {
-        let a = (!isNaN(v1[i])) ? v1[i] : 0;
-        let b = (!isNaN(v2[i])) ? v2[i] : 0;
-        summed_vector.push(sum(a, b))
+        // if either element is 'timeout' skip to next element pair
+        if (isNaN(v1[i]) || isNaN(v2[i])) continue;
+        // otherwise sum values
+        summed_vector.push(sum(v1[i], v2[i]))
     }
     return summed_vector
 
 }
 
+// Given array of objects (haystack) and property name (needle)
+// Walks through objects looking for values denoted by needle, and returns new array containing them.
 function extract(needle, haystack) {
     let output = [];
     let path = needle.split('/');
