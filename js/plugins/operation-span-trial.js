@@ -477,7 +477,7 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 
 			pr(extract('probe_error', data_repo), 'probe_error')
 			pr(sum(extract('probe_error', data_repo)), 'probe error summed')
-			let correct_count = trial_info.set_size - sum(extract('probe_error', data_repo))
+			//let correct_count = trial_info.set_size - sum(extract('probe_error', data_repo))
 			$(feedback).append(
 				$('<p />').text(`You correctly answered {0} of {1} equations`.format(correct_count, trial_info.set_size))
 			)
