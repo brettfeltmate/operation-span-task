@@ -869,6 +869,10 @@ function deg_to_px(deg) {
 
 const sum = (a, b) => a + b;
 
+function arraySum(arr) {
+    return arr.reduce((a, b) => a + b)
+}
+
 function randomChoice(arr) {
     return arr[Math.floor(arr.length * Math.random())];
 }
@@ -881,7 +885,7 @@ function get_demographic(dem_index, param) {
 /* Returns new object, subsetting obj by props  */
 function subset_obj(obj, props) {
     const subset = {};
-    for (prop of props) { subset[prop] = obj[prop] }
+    for (let prop of props) { subset[prop] = obj[prop] }
     return subset;
 }
 
@@ -941,14 +945,6 @@ function countMatches(a, b) {
 // Given numeric array, returns mean of values contained within
 function mean(vals) {
     return vals.reduce((a, b) => a + b) / vals.length
-}
-
-function getPercentError(vals, set_size) {
-    if (vals.length === 1) {
-        return 'NA'
-    } else {
-        return vals.reduce((a, b) => a + b) / set_size
-    }
 }
 
 // Given numeric array, returns SD of values contained within
@@ -1013,6 +1009,20 @@ function extract(needle, haystack) {
             }
         }
     }
-
     return output;
+}
+
+function removeUndefined(arr) {
+    let output = arr.filter(function( element ) {
+        return element !== undefined;
+    });
+    return output
+
+}
+
+function getDateTime() {
+    let today = new Date();
+    let date = today.getFullYear() + '-' + (today.getMonth()+1) + '-' + today.getDate()
+    let time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds()
+    return date + " " + time
 }

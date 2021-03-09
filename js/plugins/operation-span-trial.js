@@ -244,7 +244,6 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			$(this).children('.image-item').addClass('selected')
 
 			// grab image selected, append to recall bank
-			pr($(this).children('.image-item').data('key'))
 			let img_key = $(this).children('.image-item').data('key')
 			let img_choice = $('<div />').addClass(`image-item bg-${img_key}`)
 
@@ -404,9 +403,7 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 		if (!is_array(plugin.elements.stimuli[event_type])) {
 			event_elements.push(plugin.elements.stimuli[event_type])
 		} else {
-			plugin.elements.stimuli[event_type].forEach(function (ele) {
-				event_elements.push(ele)
-			})
+			plugin.elements.stimuli[event_type].forEach( function(ele) { event_elements.push(ele) })
 		}
 		// attach event handlers to body
 		$('body')
@@ -415,6 +412,16 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 
 		// append elements to trial display
 		$('#trial_display').empty().append(event_elements)
+	}
+
+	// returns sum of errors made for the current block
+	plugin.get_error_count = function() {
+		// get all responses
+		let responses = removeUndefined(extract('probe_error', data_repo)) // probe_error is undefined in rows corresponding to  non-equation trials
+		responses.push(trial_info.probe_error) // data for current trial yet to be written to repo, so must be manually added
+		let this_block = responses.slice(Math.max(responses.length - trial_info.set_index, 0)) // only use trial data from current block
+
+		return arraySum(this_block)
 	}
 
 	// Aggregates, computes, and logs performance metrics., then ends trial
@@ -435,7 +442,13 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 					trial_info.probe_error = (trial_info.probe_response === 'no') ? 0 : 1;
 					break;
 			}
-			trial_info.probe_error_set_percent = getPercentError(extract('probe_error', data_repo), trial_info.set_size)
+			// once more than one trial's worth of data is available for the current block, log running total of overally probe performance for block
+			if (trial_info.set_index > 1) {
+				let errors = plugin.get_error_count()
+				trial_info.probe_error_set_percent = (errors * 1.0) / trial_info.set_size
+			} else{
+				trial_info.probe_error_set_percent = 'NA'
+			}
 		}
 		// log performance on recall task
 		if (plugin.present.recall) {
@@ -446,6 +459,9 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			// equal to set size if, and only if, 100% recall accuracy, otherwise 0
 			trial_info.recall_absolute_score = (trial_info.recall_partial_score === plugin.memory_items_presented.length) ? plugin.memory_items_presented.length : 0;
 		}
+
+		// Now that performance has been computed, push trial data into repo
+		data_repo.push(trial_info)
 
 		// if end of block where events required responses, provide feedback on performance
 		if (plugin.present.feedback) {
@@ -470,23 +486,12 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 		let feedback = $('<div />').addClass('operation-span-single-item')
 		// equation feedback
 		if (plugin.present.equation) {
-			let correct_count = 0;
-			/*
-			* TODO: for this to work, you need to select ONLY probe_errors which correspond to the present set
-			* */
-
-			pr(extract('probe_error', data_repo), 'probe_error')
-			pr(sum(extract('probe_error', data_repo)), 'probe error summed')
-			//let correct_count = trial_info.set_size - sum(extract('probe_error', data_repo))
-			$(feedback).append(
-				$('<p />').text(`You correctly answered {0} of {1} equations`.format(correct_count, trial_info.set_size))
-			)
+			let errors = plugin.get_error_count(trial_info.set_size)
+			$(feedback).append( $('<p />').text(`You correctly answered {0} of {1} equations`.format(trial_info.set_size - errors, trial_info.set_size)));
 		}
 		// recall feedback
 		if (plugin.present.recall) {
-			$(feedback).append(
-				$('<p />').text(`You correctly recalled {0} of {1} items`.format(trial_info.recall_partial_score, plugin.memory_items_presented.length))
-			)
+			$(feedback).append( $('<p />').text(`You correctly recalled {0} of {1} items`.format(trial_info.recall_partial_score, plugin.memory_items_presented.length)))
 		}
 		// display feedback for 2000 ms before ending trial
 		$('#trial_display').empty().append(feedback)
@@ -557,8 +562,6 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 	plugin.end_trial = function() {
 		// remove any remaining event listeners
 		$('body').off()
-		// push trial data to repo
-		data_repo.push(trial_info)
 		// finish trial, jsPsych requires we pass it something.
 		jsPsych.finishTrial(trial_info)
 	}

@@ -33,12 +33,12 @@
     var data_repo = []
     // data template which defines content and structure of data recorded,
     var data_template = {
-    	"participant": null,
-        "session": null,
-        "session_date": null,
-        "config_name": null,
-        "practice": null,
-        "practice_type": null,
+    	"participant": 'NA',
+        "session": 'NA',
+        "session_date": getDateTime(),
+        "config_name": 'ospan_engle',
+        "practice": 'NA',
+        "practice_type": 'NA',
         "equation": 'NA',
         "equation_duration": 'NA',
         "equation_rt": 'NA',
@@ -54,9 +54,9 @@
         "recall_order": 'NA',
         "recall_absolute_score": "NA",
         "recall_partial_score": "NA",
-        "set_num": null,
-        "set_size": null,
-        "set_index": null
+        "set_num": 'NA',
+        "set_size": 'NA',
+        "set_index": 'NA'
     };
 
 
@@ -83,17 +83,17 @@
 
         //let span_paths = obj_values(span_items)
 
-        for (let j = 0; j < i; j++) {
+        for (let j = 1; j <= i; j++) {
         	let trial = {
                 'practice': 'yes',
                 'practice_type': 'span',
-                'is_recall_trial': ( j === i -1),  // set to true once each image, for a given set size, has been presented
-                'memory_item': span_items[j],
+                'is_recall_trial': ( j === i ),  // set to true once each image, for a given set size, has been presented
+                'memory_item': span_items[j - 1],
                 'memory_items_presented': span_items,
                 'memory_items_full': memory_items_full,
                 'set_num': set_num,
                 'set_size': i,
-                'set_index': j+1
+                'set_index': j
             }
 
             practice_trials_span.push(trial)
@@ -104,16 +104,16 @@
     // practice block for equation task, one trial for every practice equation (16), located at /resources/equations.js
     var practice_trials_equation = [];
     var equations_practice = array_shuffle(practice_equations)
-    for (let i = 0; i<equations_practice.length; i++) {
+    for (let i = 1; i <= equations_practice.length; i++) {
     	let trial = {
     		'practice': 'yes',
             'practice_type': 'equation',
             'is_recall_trial': false,
-            'equation': equations_practice[i],
+            'equation': equations_practice[i-1],
             'probe_validity': (coinflip()) ? 'congruent' : 'incongruent',
             'set_num': 1,
             'set_size': equations_practice.length,
-            'set_index': i+1
+            'set_index': i
         }
         practice_trials_equation.push(trial)
     }
@@ -124,18 +124,18 @@
     	let equations = array_shuffle(practice_equations).slice(0, 2)
 	    let imgs_shuffled = array_shuffle(memory_items_full)
 	    let span_items = imgs_shuffled.slice(0, 2)
-        for (let j=0; j<span_items.length; j++){
+        for (let j=1;  j <= span_items.length; j++){
         	let trial = {
                 'practice': 'yes',
-                'is_recall_trial': (j === span_items.length - 1),
-                'equation': equations[j],
+                'is_recall_trial': (j === span_items.length),
+                'equation': equations[j-1],
 		        'probe_validity': (coinflip()) ? 'congruent' : 'incongruent', // validity of probe value randomized.
-                'memory_item': span_items[j],
+                'memory_item': span_items[j-1],
 		        'memory_items_presented': span_items,
 		        'memory_items_full': memory_items_full,
                 'set_num': i,
                 'set_size': 2,
-                'set_index': j+1
+                'set_index': j
             }
             combined_practice_trials.push(trial);
         }
@@ -148,18 +148,18 @@
 		    let imgs_shuffled = array_shuffle(memory_items_full)
 		    let span_items = imgs_shuffled.slice(0, i)
 
-		    for (let k = 0; k < span_items.length; k++) {
+		    for (let k = 1; k <= span_items.length; k++) {
 			    let trial = {
 				    'practice': 'no',
-				    'is_recall_trial': (k === span_items.length - 1),
+				    'is_recall_trial': (k === span_items.length),
 				    'equation': randomChoice(testing_equations),
 				    'probe_validity': (coinflip()) ? 'congruent' : 'incongruent',
-				    'memory_item': span_items[k],
+				    'memory_item': span_items[k-1],
 				    'memory_items_presented': span_items,
 				    'memory_items_full': memory_items_full,
 				    'set_num': i*j,
 				    'set_size': i,
-				    'set_index': k+1
+				    'set_index': k
 			    }
 			    testing_trials.push(trial);
             }
