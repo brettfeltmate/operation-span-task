@@ -230,7 +230,10 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 
 		// Set whether probe events should be followed by a memory item, or if trial should end (null)
 		plugin.call_defferal = (plugin.present.memory_item) ? 'memory_item' : null;
+
+		pr(trial_info)
 	}
+
 
 	// Click event handler for recall trials
 	plugin.click_handler = function (e) {
