@@ -32,13 +32,13 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			practice: {
 				type: jsPsych.plugins.parameterType.STRING,
 				pretty_name: "practice",
-				default: null,
+				default: 'NA',
 				description: "Indicates whether this is a practice trial (yes/no)"
 			},
 			practice_type: {
 				type: jsPsych.plugins.parameterType.STRING,
 				pretty_name: "practice_type",
-				default: null,
+				default: 'NA',
 				description: "Indicates what type (span, equations) of practice trial is to be presented."
 			},
 			is_recall_trial: {
@@ -50,19 +50,19 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			equation: {
 				type: jsPsych.plugins.parameterType.STRING,
 				pretty_name: 'equation',
-				default: null,
+				default: 'NA',
 				description: "Mathematical equation (string) to be evaluated by user"
 			},
 			probe_validity: {
 				type: jsPsych.plugins.parameterType.STRING,
 				pretty_name: 'probe validity',
-				default: null,
+				default: 'NA',
 				description: "Should probe (proposed solution) be congruent (correct) or incongruent (incorrect)"
 			},
 			memory_item: {
 				type: jsPsych.plugins.parameterType.IMAGE,
 				pretty_name: 'Memory item',
-				default: null,
+				default: 'NA',
 				description: 'The memory item presented for later recall.'
 			},
 			memory_item_duration: {
@@ -230,8 +230,6 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 
 		// Set whether probe events should be followed by a memory item, or if trial should end (null)
 		plugin.call_defferal = (plugin.present.memory_item) ? 'memory_item' : null;
-
-		pr(trial_info)
 	}
 
 
@@ -461,6 +459,9 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 			trial_info.recall_partial_score = countMatches(plugin.memory_items_presented, trial_info.recall_order);
 			// equal to set size if, and only if, 100% recall accuracy, otherwise 0
 			trial_info.recall_absolute_score = (trial_info.recall_partial_score === plugin.memory_items_presented.length) ? plugin.memory_items_presented.length : 0;
+
+			// coerce recall selections to string
+			trial_info.recall_order = `${trial_info.recall_order}`;
 		}
 
 		// Now that performance has been computed, push trial data into repo

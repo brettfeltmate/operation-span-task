@@ -830,8 +830,9 @@ function obj_merge(keys_obj, vals_obj) {
 function obj_left_join(keys_obj, vals_obj) {
     if (!is_object(keys_obj) || !is_object(vals_obj)) throw "keys_obj and vals_obj must both be javascript objects";
     var joined_obj = copy(keys_obj)
-    for (var key in joined_obj) joined_obj[key] = vals_obj[key];
-
+    for (let k in vals_obj) {
+        if (obj_key_exists(k, joined_obj)) joined_obj[k] = vals_obj[k]
+    }
     return joined_obj;
 }
 
