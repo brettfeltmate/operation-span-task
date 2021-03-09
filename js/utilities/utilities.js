@@ -1022,7 +1022,12 @@ function removeUndefined(arr) {
 
 function getDateTime() {
     let today = new Date();
-    let date = today.getFullYear() + '-' + (today.getMonth()+1) + '-' + today.getDate()
-    let time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds()
-    return date + " " + time
+    let year = today.getFullYear();
+    let month = ((today.getMonth() < 10) ? "0": "") + this.getMonth();
+    let day = ((today.getDate() < 10) ? "0": "") + this.getDate();
+    let hour = ((today.getHours() < 10) ? "0": "") + this.getHours();
+    let minutes = ((today.getMinutes() < 10) ? "0": "") + this.getMinutes();
+    let seconds = ((today.getSeconds() < 10) ? "0": "") + this.getSeconds();
+
+    return year + '-' + month + '-' + day + " " + hour + ":" + minutes + ':' + seconds
 }
