@@ -59,12 +59,15 @@ body {
 .text-item {
   place-self: center;
   line-height: 0.5em;
+  font-size: 50pt;
 }
 .text-item.prompt {
   grid-area: prompt;
+  font-size: 20pt;
 }
 .text-item.recall-index {
   display: grid;
+  font-size: 20pt;
   align-items: center;
   justify-items: right;
   grid-area: index;
@@ -161,13 +164,17 @@ body {
 }
 
 .operation-span-button {
+  display: flex;
+  width: 25%;
+  height: 90%;
   opacity: 0.75;
+  align-items: center;
+  justify-content: center;
   place-self: center;
   background-color: #dfdfdc;
   border: none;
   border-radius: 12pt;
-  width: 25%;
-  height: 90%;
+  font-weight: bolder;
   color: #5a5a60;
   font-size: 20pt;
 }

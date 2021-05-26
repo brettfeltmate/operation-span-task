@@ -36,6 +36,7 @@ body {
   padding: 10px;
   height: 100%;
   width: 70%;
+  
 }
 
 .operation-span-recall-array {
@@ -68,11 +69,14 @@ body {
 .text-item {
   place-self: center;
   line-height: 0.5em;
+  font-size: 50pt;
   &.prompt {
     grid-area: prompt;
+    font-size: 20pt;
   }
   &.recall-index {
     display: grid;
+    font-size: 20pt;
     align-items: center;
     justify-items: right;
     grid-area: index;
@@ -147,13 +151,17 @@ body {
 }
 
 .operation-span-button {
+  display: flex;
+  width: 25%;
+  height: 90%;
   opacity: 0.75;
+  align-items: center;
+  justify-content: center;
   place-self: center;
   background-color: $gray;
   border: none;
   border-radius: 12pt;
-  width: 25%;
-  height: 90%;
+  font-weight: bolder;
   color: $grue;
   font-size: 20pt;
   &.selected {

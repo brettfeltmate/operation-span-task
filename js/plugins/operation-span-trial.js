@@ -232,7 +232,6 @@ jsPsych.plugins['operation-span-trial'] = (function() {
 		plugin.call_defferal = (plugin.present.memory_item) ? 'memory_item' : null;
 	}
 
-
 	// Click event handler for recall trials
 	plugin.click_handler = function (e) {
 		e.stopPropagation();
